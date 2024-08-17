@@ -1,5 +1,8 @@
 import { User } from '../models/User.js'
-
+import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+import { Op } from 'sequelize'
+import { recaptchaValidation } from '../middlewares/recaptcha.js'
 
 export async function getUsers(req, res){
     try {
@@ -8,4 +11,75 @@ export async function getUsers(req, res){
     } catch (error) {
         return res.status(500).send(error)
     }
+}
+
+export async function registerUser(req, res){
+    try {
+        const { name, lastname, username, email, password, recaptchaToken } = req.body
+        const recaptchaValidate = await recaptchaValidation(recaptchaToken)
+        if(recaptchaValidate){
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const security_code = getSecurityCode()
+            const hashedCode = await bcrypt.hash(security_code, 10)
+            await User.create({
+                name,
+                lastname,
+                username,
+                email,
+                password: hashedPassword,
+                security_code: hashedCode
+            })
+
+            return res.status(200).json({security_code})
+        }
+        else{
+            return res.status(409).json({ message: 'Error al validar el captcha' });
+        }
+    } catch (error) {
+        console.log(error);
+        
+        return res.status(500).send(error)
+    }
+}
+
+export async function login(req, res) {
+    
+    try {
+        const { credential, password, recaptchaToken } = req.body
+        const recaptchaValidate = await recaptchaValidation(recaptchaToken)
+        if(recaptchaValidate){
+            const user = await User.findOne({
+                where: {
+                    [Op.or]: [{ username: credential }, { email: credential }],
+                },
+            });
+            if (!user) {
+                return res.status(404).json({message:'El nombre de usuario no existe'});
+            }
+            if (user && bcrypt.compareSync(password, user.password)) {
+                const id = user.id
+                const token = jwt.sign({ id }, process.env.SECRET);
+                return res.status(200).send({token});
+            }
+            else {
+                res.status(403).json({message:"La contraseña ingresada es incorrecta"});
+            }
+        }
+        else{
+            return res.status(409).json({ message: 'Error al validar el captcha' });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+function getSecurityCode() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 4; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters.charAt(randomIndex);
+    }
+    return result;
 }

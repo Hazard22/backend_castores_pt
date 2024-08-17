@@ -16,5 +16,6 @@ export const User = sequelize.define('User', {
             isEmail: true
         }
     },
-    password: DataTypes.TEXT
+    password: DataTypes.TEXT,
+    security_code: DataTypes.STRING
 });

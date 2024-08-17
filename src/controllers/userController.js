@@ -13,6 +13,32 @@ export async function getUsers(req, res){
     }
 }
 
+export async function getUserData(req, res){
+    try {
+        console.log('Obteninedo informacin de usuario');
+        
+        const token = req.cookies.authToken
+
+        if (!token) {
+            return res.status(401).json({ error: 'Token no encontrado' });
+        }
+
+        jwt.verify(token, process.env.SECRET, async (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ error: 'Token inválido' });
+            }
+            const data = await User.findByPk(decoded.id)
+            if(!data){
+                return res.status(404).send('No existe un usuario asociado a este usuario o correo')
+            }
+            return res.status(200).json(data)
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send(error)
+    }
+}
+
 export async function registerUser(req, res){
     try {
         const { name, lastname, username, email, password, recaptchaToken } = req.body
@@ -37,7 +63,6 @@ export async function registerUser(req, res){
         }
     } catch (error) {
         console.log(error);
-        
         return res.status(500).send(error)
     }
 }
@@ -59,7 +84,15 @@ export async function login(req, res) {
             if (user && bcrypt.compareSync(password, user.password)) {
                 const id = user.id
                 const token = jwt.sign({ id }, process.env.SECRET);
-                return res.status(200).send({token});
+                console.log('Se obtuvo el token');
+                res.cookie('authToken', token, {
+                    secure:true,
+                    sameSite: 'none',
+                    maxAge: 24 * 60 * 60 * 1000 ,
+                });
+                res.send('Login ok');
+                console.log('Login correcto');
+                
             }
             else {
                 res.status(403).json({message:"La contraseña ingresada es incorrecta"});

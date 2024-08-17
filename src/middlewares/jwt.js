@@ -5,8 +5,9 @@ dotenv.config()
 
 export function verifyToken(req, res, next) {
 
-    const header = req.header("Authorization") || "";
-    const token = header.split(" ")[1];
+    console.log(req.cookies);
+    
+    const token = req.cookies.authToken;
     if (!token) {
         return res.status(401).json({ message: "No se encontró token" });
     }

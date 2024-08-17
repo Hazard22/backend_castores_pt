@@ -74,6 +74,53 @@ export async function login(req, res) {
     }
 }
 
+export async function verififySecurityCode(req, res){
+    try {
+        const {credential, security_code } = req.body
+        const user = await User.findOne({
+            where: {
+                [Op.or]: [{ username: credential }, { email: credential }],
+            },
+        })
+        if(!user){
+            return res.status(404).send('No existe un usuario asociado a este usuario o correo')
+        }
+        if (user && bcrypt.compareSync(security_code, user.security_code)){
+            return res.status(200).send('Ok')
+        }
+        else{
+            return res.status(403).send('Codigo invalido')
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export async function updatePassword(req, res){
+    try {
+        console.log(req.body);
+        
+        const {password, credential} = req.body
+        const user = await User.findOne({
+            where: {
+                [Op.or]: [{ username: credential }, { email: credential }],
+            },
+        })
+        
+        if(!user){
+            return res.status(404).send('No se encontro al usuario')
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword
+        await user.save()
+        return res.status(200).send('Ok')
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
 function getSecurityCode() {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';

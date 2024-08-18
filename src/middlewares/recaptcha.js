@@ -5,6 +5,8 @@ dotenv.config()
 
 export async function recaptchaValidation(token){
     try {
+        console.log(`Token de recaptcha: ${token}`);
+        
         const secret_key = process.env.SECRET_KEY_CAPTCHA
         const captchaVerificationUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secret_key}&response=${token}`;
         const response = await fetch(captchaVerificationUrl, {

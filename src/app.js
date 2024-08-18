@@ -1,6 +1,8 @@
 import express from "express"
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv'
+dotenv.config()
 
 const app = express()
 const apiPrefix = '/api/v1'
@@ -12,9 +14,9 @@ import userRoutes from "./routes/userRoutes.js"
 //Videos
 import videRoutes from "./routes/videoRoutes.js"
 
-
+const client_host = process.env.CLIENT_HOST
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: `${client_host}`,
     credentials: true
 }))
 app.use(express.json())

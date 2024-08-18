@@ -1,7 +1,9 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '..//middlewares/database.js';
+import { UserFavorites } from './UserFavorites.js';
 
-export const User = sequelize.define('User', {
+
+export const User = sequelize.define('user', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -19,3 +21,6 @@ export const User = sequelize.define('User', {
     password: DataTypes.TEXT,
     security_code: DataTypes.STRING
 });
+
+User.hasMany(UserFavorites)
+UserFavorites.belongsTo(User)

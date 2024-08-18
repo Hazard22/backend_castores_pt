@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { Op } from 'sequelize'
 import { recaptchaValidation } from '../middlewares/recaptcha.js'
+import { UserFavorites } from '../models/UserFavorites.js'
 
 export async function getUsers(req, res){
     try {
@@ -15,8 +16,6 @@ export async function getUsers(req, res){
 
 export async function getUserData(req, res){
     try {
-        console.log('Obteninedo informacin de usuario');
-        
         const token = req.cookies.authToken
 
         if (!token) {
@@ -148,6 +147,56 @@ export async function updatePassword(req, res){
         user.password = hashedPassword
         await user.save()
         return res.status(200).send('Ok')
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export async function AddFavorite(req, res) {
+    try {
+        const token = req.cookies.authToken
+        jwt.verify(token, process.env.SECRET, async (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ error: 'Token inválido' });
+            }
+            const { video_id } = req.query
+            const data = await User.findByPk(decoded.id)
+            if(!data){
+                return res.status(404).send('Usuario no encontrado')
+            }
+            await UserFavorites.create({
+                userId: data.id,
+                video_id
+            })
+            return res.status(200).send('Ok')
+        })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export async function RemoveFavorite(req, res) {
+    try {
+        const token = req.cookies.authToken
+        jwt.verify(token, process.env.SECRET, async (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ error: 'Token inválido' });
+            }
+            const { video_id } = req.query
+            const data = await User.findByPk(decoded.id)
+            if(!data){
+                return res.status(404).send('Usuario no encontrado')
+            }
+            await UserFavorites.destroy({
+                where: {
+                    userId: data.id,
+                    video_id
+                }
+            })
+            return res.status(200).send('Ok')
+        })
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: error.message });

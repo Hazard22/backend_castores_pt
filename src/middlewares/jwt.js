@@ -5,7 +5,7 @@ dotenv.config()
 
 export function verifyToken(req, res, next) {
 
-    console.log(req.cookies);
+    
     
     const token = req.cookies.authToken;
     if (!token) {

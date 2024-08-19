@@ -83,14 +83,14 @@ export async function login(req, res) {
             if (user && bcrypt.compareSync(password, user.password)) {
                 const id = user.id
                 const token = jwt.sign({ id }, process.env.SECRET);
-                console.log('Se obtuvo el token');
+                
                 res.cookie('authToken', token, {
                     secure:true,
                     sameSite: 'none',
                     maxAge: 24 * 60 * 60 * 1000 ,
                 });
                 res.send('Login ok');
-                console.log('Login correcto');
+                
                 
             }
             else {
@@ -131,7 +131,7 @@ export async function verififySecurityCode(req, res){
 
 export async function updatePassword(req, res){
     try {
-        console.log(req.body);
+        
         
         const {password, credential} = req.body
         const user = await User.findOne({
